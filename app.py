@@ -96,6 +96,17 @@ def login():
         ).scalar()
         if user and user.check_password(request.form['password']):
             login_user(user)
+            
+            # Notificar al administrador sobre el inicio de sesión
+            admin = db.session.execute(select(User).filter_by(role='admin')).scalar()
+            if admin and admin.id != user.id:  # No notificar si es el admin quien inicia sesión
+                create_notification(
+                    user_id=admin.id,
+                    title="Inicio de sesión detectado",
+                    message=f"El usuario {user.username} ({user.full_name}) ha iniciado sesión.",
+                    notification_type='system'
+                )
+                
             return redirect(url_for('dashboard'))
         flash('Usuario o contraseña incorrectos', 'danger')
     return render_template('login.html')
@@ -139,6 +150,16 @@ def register():
 @app.route('/logout')
 @login_required
 def logout():
+    # Notificar al administrador sobre el cierre de sesión
+    admin = db.session.execute(select(User).filter_by(role='admin')).scalar()
+    if admin and admin.id != current_user.id:  # No notificar si es el admin quien cierra sesión
+        create_notification(
+            user_id=admin.id,
+            title="Cierre de sesión detectado",
+            message=f"El usuario {current_user.username} ({current_user.full_name}) ha cerrado sesión.",
+            notification_type='system'
+        )
+    
     logout_user()
     return redirect(url_for('login'))
 

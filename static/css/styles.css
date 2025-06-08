@@ -171,12 +171,6 @@
     text-decoration: none;
 }
 
-.forgot-password {
-    display: block;
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
     .login-container {
@@ -224,20 +218,6 @@
     margin-right: 10px;
 }
 
-.header-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.btn-back {
-    background-color: #f8f9fa;
-    color: #2c3e50;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    text-decoration: none;
-    border: 1px solid #ddd;
-}
-
 .profile-card, .stats-card {
     background: white;
     border-radius: 10px;
@@ -261,10 +241,6 @@
     color: #4CAF50;
 }
 
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
@@ -278,20 +254,6 @@
     margin-right: 8px;
     width: 20px;
     color: #4CAF50;
-}
-
-.form-control {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1rem;
-}
-
-.form-control:focus {
-    border-color: #4CAF50;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
 }
 
 .birds-table {
@@ -1063,15 +1025,6 @@
     color: #0288d1;
 }
 
-/* Ajustes para la visualización de premios */
-.award-meta {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 0.5rem;
-}
-
 /* admin_user_details.css */
 .user-detail-container {
     max-width: 1200px;
@@ -1107,18 +1060,6 @@
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
-}
-
-.btn-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 5px;
-    color: #495057;
-    text-decoration: none;
 }
 
 .stats-grid {
