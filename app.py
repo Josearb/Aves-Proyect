@@ -810,14 +810,14 @@ def manage_food_types():
             db.session.add(new_food)
             db.session.commit()
             
-            # Notificar a los especialistas sobre el nuevo alimento
-            specialists = db.session.execute(
-                select(User).where(User.role == 'specialist')
+            # Notificar a los especialistas y al admin sobre el nuevo alimento
+            recipients = db.session.execute(
+                select(User).where(User.role.in_(['specialist', 'admin']))
             ).scalars().all()
             
-            for specialist in specialists:
+            for recipient in recipients:
                 create_notification(
-                    user_id=specialist.id,
+                    user_id=recipient.id,
                     title="Nuevo tipo de alimento añadido",
                     message=f"El dependiente {current_user.full_name} ha añadido: {name} a (${price:.2f}/lb) al almacén",
                     notification_type='food'
@@ -848,9 +848,9 @@ def update_food_price(food_id):
     try:
         new_price = float(request.form.get('new_price'))
         if food.price_per_pound != new_price:
-            # Notificar a especialistas Y dependientes sobre cambio de precio
+            # Notificar a especialistas, dependientes Y admin sobre cambio de precio
             staff_members = db.session.execute(
-                select(User).where(User.role.in_(['specialist', 'dependiente']))
+                select(User).where(User.role.in_(['specialist', 'dependiente', 'admin']))
             ).scalars().all()
             
             for member in staff_members:
@@ -889,14 +889,14 @@ def delete_food_type(food_id):
         flash('Tipo de comida no encontrado', 'danger')
     else:
         try:
-            # Notificar a los especialistas sobre la eliminación (antes de borrar)
-            specialists = db.session.execute(
-                select(User).where(User.role == 'specialist')
+            # Notificar a los especialistas y al admin sobre la eliminación (antes de borrar)
+            recipients = db.session.execute(
+                select(User).where(User.role.in_(['specialist', 'admin']))
             ).scalars().all()
             
-            for specialist in specialists:
+            for recipient in recipients:
                 create_notification(
-                    user_id=specialist.id,
+                    user_id=recipient.id,
                     title="Tipo de alimento eliminado",
                     message=f"El dependiente {current_user.full_name} ha eliminado el: {food.name} del almacén",
                     notification_type='food'
