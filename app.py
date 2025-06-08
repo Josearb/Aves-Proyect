@@ -809,6 +809,20 @@ def manage_food_types():
             new_food = BirdFoodType(name=name, price_per_pound=price)
             db.session.add(new_food)
             db.session.commit()
+            
+            # Notificar a los especialistas sobre el nuevo alimento
+            specialists = db.session.execute(
+                select(User).where(User.role == 'specialist')
+            ).scalars().all()
+            
+            for specialist in specialists:
+                create_notification(
+                    user_id=specialist.id,
+                    title="Nuevo tipo de alimento añadido",
+                    message=f"El dependiente {current_user.full_name} ha añadido: {name} a (${price:.2f}/lb) al almacén",
+                    notification_type='food'
+                )
+            
             flash(f'Tipo de comida "{name}" agregado correctamente', 'success')
         except Exception as e:
             db.session.rollback()
@@ -875,6 +889,19 @@ def delete_food_type(food_id):
         flash('Tipo de comida no encontrado', 'danger')
     else:
         try:
+            # Notificar a los especialistas sobre la eliminación (antes de borrar)
+            specialists = db.session.execute(
+                select(User).where(User.role == 'specialist')
+            ).scalars().all()
+            
+            for specialist in specialists:
+                create_notification(
+                    user_id=specialist.id,
+                    title="Tipo de alimento eliminado",
+                    message=f"El dependiente {current_user.full_name} ha eliminado el: {food.name} del almacén",
+                    notification_type='food'
+                )
+            
             db.session.delete(food)
             db.session.commit()
             flash('Tipo de comida eliminado correctamente', 'success')

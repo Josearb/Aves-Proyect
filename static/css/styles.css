@@ -2459,3 +2459,108 @@
     padding: 5px;
 }
 
+/* Estilo base con tema verde */
+    :root {
+        --primary-green: #28a745;
+        --light-green: #d4edda;
+        --dark-green: #218838;
+        --soft-green: #e8f5e9;
+        --text-dark: #343a40;
+        --text-muted: #6c757d;
+    }
+    
+    body {
+        background-color: #f8f9fa;
+        color: var(--text-dark);
+    }
+    
+    h2 {
+        color: var(--primary-green);
+        font-weight: 600;
+        border-bottom: 2px solid var(--primary-green);
+        padding-bottom: 8px;
+        display: inline-block;
+    }
+    
+    /* Estilo para el botón de actualizar */
+    .btn-outline-secondary {
+        border-color: var(--primary-green);
+        color: var(--primary-green);
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: var(--primary-green);
+        color: white;
+    }
+    
+    /* Estilo para las notificaciones */
+    .list-group {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .list-group-item {
+        margin-bottom: 12px;
+        border-radius: 8px !important;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        padding: 16px;
+    }
+    
+    .list-group-item:not(:last-child) {
+        margin-bottom: 12px;
+    }
+    
+    .list-group-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Notificación no leída */
+    .list-group-item-primary {
+        background-color: var(--light-green);
+        border-left: 4px solid var(--primary-green);
+    }
+    
+    /* Estilo para los títulos */
+    .list-group-item h5 {
+        color: var(--primary-green);
+        font-weight: 600;
+    }
+    
+    /* Estilo para la fecha */
+    small {
+        color: var(--text-muted) !important;
+        font-size: 0.85rem;
+    }
+    
+    /* Botón de marcar como leída */
+    .btn-success {
+        background-color: var(--primary-green);
+        border-color: var(--primary-green);
+    }
+    
+    .btn-success:hover {
+        background-color: var(--dark-green);
+        border-color: var(--dark-green);
+    }
+    
+    /* Badge de leída */
+    .badge.bg-secondary {
+        background-color: var(--text-muted) !important;
+    }
+    
+    /* Alerta de no notificaciones */
+    .alert-info {
+        background-color: var(--soft-green);
+        border-color: var(--light-green);
+        color: var(--dark-green);
+        border-radius: 8px;
+    }
+    
+    /* Iconos */
+    .fas {
+        margin-right: 5px;
+    }
+
