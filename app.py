@@ -133,7 +133,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         
-        # Notificar al administrador sobre el nuevo registro
+        # Notificar SOLO al administrador (no a especialistas)
         admin = db.session.execute(select(User).filter_by(role='admin')).scalar()
         if admin:
             create_notification(
@@ -168,9 +168,7 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Marcar notificaciones como leídas al entrar al dashboard
-    mark_notifications_as_read(current_user.id)
-    
+
     if current_user.role == 'admin':
         return redirect(url_for('admin_users'))
     elif current_user.role in ['specialist', 'dependiente']:  
@@ -263,6 +261,20 @@ def assign_role(user_id):
                 message=message,
                 notification_type='system'
             )
+            
+            # Notificar a los especialistas si el usuario fue marcado como asociado
+            if new_association and not user.is_associated:
+                specialists = db.session.execute(
+                    select(User).where(User.role == 'specialist')
+                ).scalars().all()
+                
+                for specialist in specialists:
+                    create_notification(
+                        user_id=specialist.id,
+                        title="Nuevo usuario asociado",
+                        message=f"El usuario {user.full_name} ha sido asociado.",
+                        notification_type='system'
+                    )
         
         user.role = new_role
         user.is_associated = new_association
@@ -894,7 +906,7 @@ def get_unread_notifications(user_id):
     ).scalars().all()
 
 def mark_notifications_as_read(user_id):
-    """Marca todas las notificaciones como leídas"""
+    """Marca todas las notificaciones como leídas para un usuario"""
     db.session.execute(
         update(Notification)
         .where(Notification.user_id == user_id, Notification.is_read == False)
@@ -905,11 +917,15 @@ def mark_notifications_as_read(user_id):
 @app.route('/notifications')
 @login_required
 def notifications():
+    # Primero obtenemos las notificaciones
     all_notifications = db.session.execute(
         select(Notification)
         .where(Notification.user_id == current_user.id)
         .order_by(Notification.created_at.desc())
     ).scalars().all()
+    
+    # Luego las marcamos como leídas (solo cuando el usuario las ve)
+    mark_notifications_as_read(current_user.id)
     
     return render_template('notifications.html', notifications=all_notifications)
 
