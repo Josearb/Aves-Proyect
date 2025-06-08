@@ -20,15 +20,27 @@ login_manager.login_view = 'login'
 @app.context_processor
 def utility_processor():
     def get_unread_notifications_count(user_id):
-        return Notification.query.filter_by(user_id=user_id, is_read=False).count()
+        user = db.session.get(User, user_id)
+        if user.role == 'admin':
+            # Admin ve todas sus notificaciones no leídas (incluyendo copias)
+            return Notification.query.filter_by(user_id=user_id, is_read=False).count()
+        else:
+            return Notification.query.filter_by(user_id=user_id, is_read=False).count()
     
     def get_unread_notifications(user_id):
-        return Notification.query.filter_by(user_id=user_id, is_read=False).order_by(Notification.created_at.desc()).all()
+        user = db.session.get(User, user_id)
+        if user.role == 'admin':
+            # Admin ve todas sus notificaciones no leídas (incluyendo copias)
+            return Notification.query.filter_by(user_id=user_id, is_read=False).order_by(Notification.created_at.desc()).all()
+        else:
+            return Notification.query.filter_by(user_id=user_id, is_read=False).order_by(Notification.created_at.desc()).all()
     
     return dict(
         get_unread_notifications_count=get_unread_notifications_count,
         get_unread_notifications=get_unread_notifications
     )
+    
+
 
 def create_default_data():
     with app.app_context():
@@ -901,6 +913,7 @@ def notification_count():
 
 def create_notification(user_id, title, message, notification_type='system', is_read=False):
     """Crea una nueva notificación"""
+    # Crear notificación para el usuario destino
     notification = Notification(
         user_id=user_id,
         title=title,
@@ -910,6 +923,20 @@ def create_notification(user_id, title, message, notification_type='system', is_
         created_at=datetime.utcnow()
     )
     db.session.add(notification)
+    
+    # Obtener al administrador y enviarle una copia (excepto si el destino ES el admin)
+    admin = db.session.execute(select(User).filter_by(role='admin').limit(1)).scalar()
+    if admin and admin.id != user_id:
+        admin_notification = Notification(
+            user_id=admin.id,
+            title=f"[ADMIN COPY] {title}",
+            message=f"Notificación enviada a {db.session.get(User, user_id).full_name}:\n\n{message}",
+            notification_type=notification_type,
+            is_read=False,
+            created_at=datetime.utcnow()
+        )
+        db.session.add(admin_notification)
+    
     db.session.commit()
     return notification
 
