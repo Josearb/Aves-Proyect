@@ -1,0 +1,71 @@
+{% extends "base_print.html" %}  <!-- Asume que tienes una base para impresión -->
+
+{% block content %}
+<div class="print-container">
+
+    <div class="report-content">
+        <!-- Tabla de resumen por categorías -->
+        <h2>Resumen General por Categorías</h2>
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>Total Aves</th>
+                    <th>Total Exportación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ category.name }}</td>
+                    <td class="text-center">{{ category.total_quantity or 0 }}</td>
+                    <td class="text-center">{{ category.total_export or 0 }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="total-row">
+                    <td><strong>TOTAL GENERAL</strong></td>
+                    <td class="text-center"><strong>{{ grand_total }}</strong></td>
+                    <td class="text-center"><strong>{{ grand_export }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Detalle por asociado -->
+        <h2>Detalle por Asociado</h2>
+        {% for user in associates %}
+        <div class="user-section">
+            <h3>{{ user.full_name }} ({{ user.username }})</h3>
+            
+            {% if user.birds %}
+            <table class="user-birds-table">
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Cantidad</th>
+                        <th>Exportación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bird in user.birds %}
+                    <tr>
+                        <td>{{ bird.category.name }}</td>
+                        <td class="text-center">{{ bird.quantity }}</td>
+                        <td class="text-center">{{ bird.export_quantity }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="user-total">
+                        <td><strong>Total</strong></td>
+                        <td class="text-center"><strong>{{ user.birds|sum(attribute='quantity') }}</strong></td>
+                        <td class="text-center"><strong>{{ user.birds|sum(attribute='export_quantity') }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            {% else %}
+            <p class="no-birds">No tiene aves registradas</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

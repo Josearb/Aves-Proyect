@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Reporte{% endblock %}</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <style>
+        /* Estilos principales del contenedor */
+.print-container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px;
+    color: #2c3e50;
+    background: white;
+}
+
+/* Encabezado del reporte */
+.print-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #3498db;
+}
+
+.print-header h1 {
+    color: #2c3e50;
+    font-size: 28px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.report-info {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+/* Contenido del reporte */
+.report-content {
+    margin-top: 30px;
+}
+
+.report-content h2 {
+    color: #3498db;
+    font-size: 22px;
+    margin: 35px 0 20px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+}
+
+/* Estilos para tablas */
+.summary-table, 
+.user-birds-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 40px;
+    font-size: 14px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+.summary-table th, 
+.user-birds-table th {
+    background-color: #3498db;
+    color: white;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.summary-table td, 
+.user-birds-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Filas especiales */
+.total-row {
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+.user-total {
+    font-weight: bold;
+    background-color: #f1f8fe;
+}
+
+/* Sección de usuario */
+.user-section {
+    margin-bottom: 40px;
+    page-break-inside: avoid;
+    border: 1px solid #eee;
+    padding: 20px;
+    border-radius: 5px;
+    background: #fdfdfd;
+}
+
+.user-section h3 {
+    color: #2c3e50;
+    font-size: 18px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.no-birds {
+    color: #95a5a6;
+    font-style: italic;
+    padding: 15px 0;
+    text-align: center;
+}
+
+/* Alineación de texto */
+.text-right {
+    text-align: right;
+}
+
+/* Botones (solo para pantalla) */
+.print-actions {
+    margin-top: 40px;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border-radius: 5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+}
+
+.btn i {
+    margin-right: 8px;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+    transform: translateY(-2px);
+}
+
+/* Media Queries */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .print-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    .user-section {
+        border: none !important;
+        padding: 10px 0 !important;
+        page-break-inside: avoid !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .print-container {
+        padding: 20px;
+    }
+    
+    .print-header h1 {
+        font-size: 24px;
+    }
+    
+    .report-content h2 {
+        font-size: 20px;
+    }
+    
+    .summary-table, 
+    .user-birds-table {
+        font-size: 13px;
+    }
+}
+    </style>
+</head>
+<body>
+    {% block content %}{% endblock %}
+    
+    <script>
+        // Auto-imprimir si se desea (opcional)
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if(urlParams.get('autoprint') === '1') {
+                window.print();
+            }
+        });
+    </script>
+</body>
+</html>

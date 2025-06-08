@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Administrar Usuarios{% endblock %}
+
+{% block content %}
+<div class="users-container">
+    <div class="users-header">
+        <h2><i class="fas fa-users-cog"></i> Listado de Usuarios</h2>
+    </div>
+    
+    <!-- Formulario de filtrado minimalista -->
+    <div class="filter-section">
+        <form method="GET" action="{{ url_for('admin_users') }}" class="filter-form">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label for="name" class="filter-label">Buscar por nombre</label>
+                    <input type="text" class="filter-input" id="name" name="name" 
+                           value="{{ search_name }}" placeholder="Nombre del usuario">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="award_year" class="filter-label">Año de premio</label>
+                    <input type="number" class="filter-input" id="award_year" name="award_year" 
+                           value="{{ award_year }}" placeholder="Ej. 2023" min="2000" max="{{ current_year }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="award_position" class="filter-label">Puesto obtenido</label>
+                    <select class="filter-input filter-select" id="award_position" name="award_position">
+                        <option value="">Todos los puestos</option>
+                        <option value="Gran Premio" {% if award_position == 'Gran Premio' %}selected{% endif %}>Gran Premio</option>
+                        <option value="1er lugar" {% if award_position == '1er lugar' %}selected{% endif %}>1er lugar</option>
+                        <option value="2do lugar" {% if award_position == '2do lugar' %}selected{% endif %}>2do lugar</option>
+                        <option value="3er lugar" {% if award_position == '3er lugar' %}selected{% endif %}>3er lugar</option>
+                        <option value="4to lugar" {% if award_position == '4to lugar' %}selected{% endif %}>4to lugar</option>
+                        <option value="mención especial" {% if award_position == 'mención especial' %}selected{% endif %}>Mención especial</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Limpiar
+                    </a>
+                    <a href="{{ url_for('associates_report_view') }}" class="btn btn-info" target="_blank">
+                        <i class="fas fa-print"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Tabla de resultados -->
+    <div class="users-table-container">
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Asociación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if users %}
+                    {% for user in users %}
+                    <tr class="clickable-row" data-href="{{ url_for('user_details', user_id=user.id) }}">
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.full_name }}</td>
+                        <td>{{ user.phone }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('assign_role', user_id=user.id) }}" class="role-form">
+                                <select name="role" class="form-select form-select-sm">
+                                    <option value="user" {% if user.role == 'user' %}selected{% endif %}>Usuario</option>
+                                    <option value="specialist" {% if user.role == 'specialist' %}selected{% endif %}>Especialista</option>
+                                    <option value="dependiente" {% if user.role == 'dependiente' %}selected{% endif %}>Dependiente</option>
+                                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrador</option>
+                                </select>
+                        </td>
+                        <td>
+                                <select name="is_associated" class="form-select form-select-sm">
+                                    <option value="true" {% if user.is_associated %}selected{% endif %}>Asociado</option>
+                                    <option value="false" {% if not user.is_associated %}selected{% endif %}>No asociado</option>
+                                </select>
+                        </td>
+                        <td class="actions-column">
+                            <div class="action-buttons">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="fas fa-save"></i> Guardar
+                                </button>
+                            </div>
+                            </form>
+                            
+                            <div class="action-buttons mt-1">
+                                <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" 
+                                      onsubmit="return confirm('¿Está seguro que desea eliminar este usuario permanentemente?');" 
+                                      class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash-alt"></i> Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            <h3>No se encontraron usuarios</h3>
+                            <p>No hay usuarios que coincidan con los filtros aplicados</p>
+                            <a href="{{ url_for('admin_users') }}" class="btn btn-primary">
+                                <i class="fas fa-undo"></i> Restablecer filtros
+                            </a>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+// Hacer filas clickeables excepto cuando se hace clic en un botón o formulario
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.style.cursor = 'pointer';
+        
+        row.addEventListener('click', function(e) {
+            // Verificar si el clic fue en un botón, enlace o elemento de formulario
+            if (e.target.tagName === 'BUTTON' || 
+                e.target.tagName === 'A' || 
+                e.target.tagName === 'INPUT' || 
+                e.target.tagName === 'SELECT' ||
+                e.target.closest('button') || 
+                e.target.closest('a') || 
+                e.target.closest('form')) {
+                return;
+            }
+            
+            window.location.href = this.dataset.href;
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+/* Estilos para mejorar la visualización de los botones de acción */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.role-form {
+    display: contents; /* Permite que el formulario no rompa el diseño de la tabla */
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.mt-1 {
+    margin-top: 0.25rem;
+}
+</style>
+{% endblock %}
+{% endblock %}

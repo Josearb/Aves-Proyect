@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuario - {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<div class="user-management-container">
+    <div class="user-header">
+        <div class="header-content">
+            <h1><i class="fas fa-user"></i> {{ user.full_name }}</h1>
+            <div class="user-meta">
+                <span class="user-role-badge {% if user.role == 'specialist' %}specialist{% elif user.role == 'dependiente' %}dependiente{% else %}user{% endif %}">
+                    {{ user.role|capitalize }}
+                </span>
+                <span class="user-status {% if user.is_associated %}associated{% else %}not-associated{% endif %}">
+                    {% if user.is_associated %}Asociado{% else %}No asociado{% endif %}
+                </span>
+            </div>
+        </div>
+        <a href="{{ url_for('specialist_users') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver a la lista
+        </a>
+    </div>
+
+    <div class="user-sections">
+        <!-- Sección de Aves Registradas -->
+        <div class="section-card birds-section">
+            <div class="section-header">
+                <h2><i class="fas fa-dove"></i> Aves Registradas</h2>
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ user.birds|sum(attribute='quantity') }}</span>
+                        <span class="stat-label">Total Aves</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ "%.2f"|format(user.birds|sum(attribute='food_required')) }} lb</span>
+                        <span class="stat-label">Comida Semanal</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">
+                            {% if user.birds and user.birds[0].food_type %}
+                                {% set food_type = food_types|selectattr('name', 'equalto', user.birds[0].food_type)|first %}
+                                {% if food_type %}
+                                    ${{ "%.2f"|format(user.birds|sum(attribute='food_required') * food_type.price_per_pound) }}
+                                {% else %}
+                                    $0.00
+                                {% endif %}
+                            {% else %}
+                                $0.00
+                            {% endif %}
+                        </span>
+                        <span class="stat-label">Costo Semanal</span>
+                    </div>
+                </div>
+            </div>
+            
+            <form method="POST">
+                <div class="table-container">
+                    <table class="birds-table">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th class="text-center">Cantidad</th>
+                                <th>Tipo de Comida</th>
+                                <th>Proceso</th>
+                                <th class="text-center">Comida/Ave</th>
+                                <th class="text-center">Total</th>
+                                {% if current_user.role == 'dependiente' %}
+                                <th class="text-center">Costo Total</th>
+                                {% endif %}
+                                <th>Actualizado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_cost = namespace(value=0) %}
+                            {% for bird in user.birds %}
+                            <tr>
+                                <td class="category-name">{{ bird.category.name }}</td>
+                                <td class="text-center quantity-cell">{{ bird.quantity }}</td>
+                                <td class="food-type-cell">
+                                    {% if current_user.role == 'dependiente' %}
+                                        <span class="food-type-value">{{ bird.food_type|default('No especificado', true) }}</span>
+                                    {% else %}
+                                        {% if bird.quantity == 0 %}
+                                            <span class="food-type-value">No requerido</span>
+                                        {% else %}
+                                            <select class="form-select food-type" name="food_type_{{ bird.id }}" 
+                                                    data-bird-id="{{ bird.id }}" required>
+                                                <option value="">Seleccionar...</option>
+                                                {% for food in food_types %}
+                                                <option value="{{ food.name }}" 
+                                                        {% if bird.food_type == food.name %}selected{% endif %}>
+                                                    {{ food.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="process-cell">
+                                    {% if current_user.role == 'dependiente' %}
+                                        <span class="process-value">{{ bird.food_process|default('No especificado', true) }}</span>
+                                    {% else %}
+                                        {% if bird.quantity == 0 %}
+                                            <span class="process-value">No requerido</span>
+                                        {% else %}
+                                            <select class="form-select process-select" name="food_process_{{ bird.id }}" 
+                                                    id="process_{{ bird.id }}" {% if bird.food_type == 'Arroz en cáscara'%}disabled{% endif %}>
+                                                <option value="">Seleccionar...</option>
+                                                <option value="grano" {% if bird.food_process == 'grano' %}selected{% endif %}>Grano</option>
+                                                <option value="molido grueso" {% if bird.food_process == 'molido grueso' %}selected{% endif %}>Molido grueso</option>
+                                                <option value="molido fino" {% if bird.food_process == 'molido fino' %}selected{% endif %}>Molido fino</option>
+                                                <option value="sémola" {% if bird.food_process == 'sémola' %}selected{% endif %}>Sémola</option>
+                                            </select>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="text-center food-per-bird">
+                                    {% if current_user.role == 'dependiente' %}
+                                        <span class="food-value">{{ bird.food_per_bird|default('No asignado', true) }}</span>
+                                    {% else %}
+                                        {% if bird.quantity == 0 %}
+                                            <span class="food-value">No requerido</span>
+                                        {% else %}
+                                            <input type="number" step="0.01" class="form-control text-center" 
+                                                   name="food_{{ bird.id }}" value="{{ bird.food_per_bird or '' }}"
+                                                   required>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="text-center total-food">
+                                    <span class="total-badge">{{ "%.2f"|format(bird.food_required) }} lb</span>
+                                </td>
+                                {% if current_user.role == 'dependiente' %}
+                                <td class="text-center cost-cell">
+                                    {% if bird.food_type %}
+                                        {% set food_type = food_types|selectattr('name', 'equalto', bird.food_type)|first %}
+                                        {% if food_type %}
+                                            {% set cost = bird.food_required * food_type.price_per_pound %}
+                                            {% set total_cost.value = total_cost.value + cost %}
+                                            ${{ "%.2f"|format(cost) }}
+                                        {% else %}
+                                            $0.00
+                                        {% endif %}
+                                    {% else %}
+                                        $0.00
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <td class="update-time">
+                                    {% if bird.last_updated %}
+                                    <span class="last-updated">{{ bird.last_updated.strftime('%d/%m/%Y %H:%M') }}</span>
+                                    {% else %}
+                                    <span class="no-record">No registrado</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <!-- Fila de totales -->
+                            <tr class="total-row">
+                                {% if current_user.role == 'dependiente' %}
+                                <td colspan="5"><strong>Total General</strong></td>
+                                <td class="text-center"><strong>{{ "%.2f"|format(user.birds|sum(attribute='food_required')) }} lb</strong></td>
+                                <td class="text-center"><strong>${{ "%.2f"|format(total_cost.value) }}</strong></td>
+                                {% endif %}
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if current_user.role != 'dependiente' %}
+                <button type="submit" class="btn-save-data">
+                    <i class="fas fa-save"></i> Guardar
+                </button>   
+                <div class="add-award-section">
+                    <h3><i class="fas fa-trophy"></i> Añadir Nuevo Premio</h3>
+                    <div class="award-form-fields">
+                        <div class="form-group">
+                            <select class="form-control select-with-add" name="contest_name" id="contest_name_select">
+                                <option value="" selected disabled>Seleccione un concurso</option>
+                                {% for contest in existing_contests %}
+                                <option value="{{ contest }}">{{ contest }}</option>
+                                {% endfor %}
+                                <option value="__other__">Otro (Agregar nuevo)</option>
+                            </select>
+                            <div id="new_contest_container" style="display: none; margin-top: 10px;">
+                                <input type="text" class="form-control" id="new_contest_input" placeholder="Nombre del nuevo concurso">
+                                <button type="button" class="btn btn-sm btn-primary mt-2" id="add_contest_btn">Agregar</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="cancel_contest_btn">Cancelar</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="date" class="form-control" name="award_date">
+                        </div>
+                        <div class="form-group">
+                            <select class="form-select" name="award_category">
+                                <option value="" selected disabled>Categoría del premio</option>
+                                {% for category in categories %}
+                                <option value="{{ category.name }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <select class="form-select" name="position">
+                                <option value="" selected disabled>Seleccione puesto</option>
+                                <option value="Gran Premio">Gran Premio</option>
+                                <option value="1er lugar">1er lugar</option>
+                                <option value="2do lugar">2do lugar</option>
+                                <option value="3er lugar">3er lugar</option>
+                                <option value="4to lugar">4to lugar</option>
+                                <option value="mención especial">Mención especial</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-save-award">
+                            <i class="fas fa-plus-circle"></i> Agregar Premio
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Sección de Premios Obtenidos -->
+        {% if current_user.role != 'dependiente' %}
+        <div class="section-card awards-section">
+            <div class="section-header">
+                <h2><i class="fas fa-award"></i> Premios Obtenidos</h2>
+                <span class="badge-count">{{ user.awards|length }} premios</span>
+            </div>
+            
+            {% if user.awards %}
+            <div class="awards-container">
+                {% for award in user.awards %}
+                <div class="award-item">
+                    <div class="award-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="award-details">
+                        <h3>{{ award.contest_name }}</h3>
+                        <div class="award-meta">
+                            <span class="award-category">{{ award.category }}</span>
+                            <span class="award-date">{{ award.award_date.strftime('%d/%m/%Y') }}</span>
+                            <span class="award-position">{{ award.position }}</span>
+                        </div>
+                    </div>
+                    {% if current_user.role in ['admin', 'specialist'] %}
+                    <form method="POST" action="{{ url_for('delete_award', award_id=award.id) }}" 
+                          class="delete-award-form" onsubmit="return confirm('¿Estás seguro de eliminar este premio?');">
+                        <button type="submit" class="btn-delete-award" title="Eliminar premio">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-trophy"></i>
+                <p>El usuario no tiene premios registrados</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar el cambio en el tipo de alimento
+    document.querySelectorAll('.food-type').forEach(select => {
+        select.addEventListener('change', function() {
+            const birdId = this.getAttribute('data-bird-id');
+            const processSelect = document.querySelector(`#process_${birdId}`);
+            
+            if (this.value === 'Arroz en cáscara') {
+                processSelect.disabled = true;
+                processSelect.value = '';
+            } else {
+                processSelect.disabled = false;
+            }
+        });
+    });
+
+    // Elementos del selector de concursos
+    const contestSelect = document.getElementById('contest_name_select');
+    const newContestContainer = document.getElementById('new_contest_container');
+    const newContestInput = document.getElementById('new_contest_input');
+    const addContestBtn = document.getElementById('add_contest_btn');
+    const cancelContestBtn = document.getElementById('cancel_contest_btn');
+
+    // Mostrar/ocultar campo para nuevo concurso
+    contestSelect.addEventListener('change', function() {
+        if (this.value === '__other__') {
+            newContestContainer.style.display = 'block';
+            this.required = false;
+        } else {
+            newContestContainer.style.display = 'none';
+            this.required = true;
+        }
+    });
+
+    // Agregar nuevo concurso
+    addContestBtn.addEventListener('click', function() {
+        const newContestName = newContestInput.value.trim();
+        if (newContestName) {
+            // Agregar la nueva opción al select
+            const newOption = document.createElement('option');
+            newOption.value = newContestName;
+            newOption.textContent = newContestName;
+            newOption.selected = true;
+            
+            // Insertar antes de la opción "Otro"
+            contestSelect.insertBefore(newOption, contestSelect.lastChild);
+            
+            // Limpiar y ocultar
+            resetContestInput();
+        }
+    });
+
+    // Cancelar agregar nuevo concurso
+    cancelContestBtn.addEventListener('click', function() {
+        resetContestInput();
+    });
+
+    // Clic fuera del área del concurso para resetear
+    document.addEventListener('click', function(e) {
+        const isClickInside = contestSelect.contains(e.target) || 
+                             newContestContainer.contains(e.target);
+        
+        if (!isClickInside && newContestContainer.style.display === 'block') {
+            resetContestInput();
+        }
+    });
+
+    // Función para resetear el input de nuevo concurso
+    function resetContestInput() {
+        newContestInput.value = '';
+        newContestContainer.style.display = 'none';
+        contestSelect.value = '';
+        contestSelect.required = true;
+    }
+});
+</script>
+{% endblock %}

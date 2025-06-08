@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h2><i class="fas fa-user-circle"></i> Mi Perfil</h2>
+    </div>
+
+    <div class="profile-card">
+        <form method="POST" action="{{ url_for('profile') }}" id="profile-form">
+            <div class="section-title">
+                <i class="fas fa-id-card"></i> Información Personal
+            </div>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label><i class="fas fa-signature"></i> Nombre completo</label>
+                        <input type="text" class="form-control" name="full_name" 
+                               value="{{ current_user.full_name }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label><i class="fas fa-phone"></i> Teléfono</label>
+                        <input type="tel" class="form-control" name="phone" 
+                               value="{{ current_user.phone }}" required>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Dirección</label>
+                        <input type="text" class="form-control" name="address" 
+                               value="{{ current_user.address or '' }}" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title mt-5">
+                <i class="fas fa-dove"></i> Mis Aves
+            </div>
+            
+            <div class="table-responsive">
+                <table class="birds-table">
+                    <thead>
+                        <tr>
+                            <th>Categoría</th>
+                            <th>Cantidad</th>
+                            <th>Exportación</th>
+                            <th>Disponibles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td>{{ category.name }}</td>
+                            <td>
+                                {% set user_bird = current_user.birds|selectattr('category_id', 'equalto', category.id)|first %}
+                                <input type="number" class="form-control quantity-input" 
+                                       name="category_{{ category.id }}" 
+                                       value="{{ user_bird.quantity if user_bird else 0 }}" 
+                                       min="0"
+                                       data-category="{{ category.id }}"
+                                       oninput="updateExportField(this)">
+                            </td>
+                            <td>
+                                {% set user_bird = current_user.birds|selectattr('category_id', 'equalto', category.id)|first %}
+                                <input type="number" class="form-control export-input" 
+                                       name="export_{{ category.id }}" 
+                                       value="{{ user_bird.export_quantity if user_bird else 0 }}" 
+                                       min="0"
+                                       max="{{ user_bird.quantity if user_bird else 0 }}"
+                                       data-category="{{ category.id }}"
+                                       {% if not user_bird or user_bird.quantity <= 0 %}disabled{% endif %}>
+                            </td>
+                            <td class="available-cell">
+                                <span id="available-{{ category.id }}">
+                                    {{ (user_bird.quantity - user_bird.export_quantity) if user_bird else 0 }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-footer">
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-card">
+        <div class="section-title">
+            <i class="fas fa-chart-pie"></i> Mis Estadísticas
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ current_user.birds|sum(attribute='quantity') }}</div>
+                <div class="stat-label">Aves registradas</div>
+                <i class="stat-icon fas fa-dove"></i>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-value">{{ current_user.birds|sum(attribute='export_quantity') }}</div>
+                <div class="stat-label">Aves para exportación</div>
+                <i class="stat-icon fas fa-plane-departure"></i>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-value">{{ current_user.awards|length }}</div>
+                <div class="stat-label">Premios obtenidos</div>
+                <i class="stat-icon fas fa-trophy"></i>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-value">{{ current_user.birds|sum(attribute='food_required') }} lb</div>
+                <div class="stat-label">Comida semanal</div>
+                <i class="stat-icon fas fa-utensils"></i>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Función para actualizar el campo de exportación cuando cambia la cantidad
+function updateExportField(input) {
+    const categoryId = input.dataset.category;
+    const quantity = parseInt(input.value) || 0;
+    const exportInput = document.querySelector(`.export-input[data-category="${categoryId}"]`);
+    const availableSpan = document.querySelector(`#available-${categoryId}`);
+    
+    // Actualizar estado del campo exportación
+    exportInput.disabled = quantity <= 0;
+    exportInput.max = quantity;
+    
+    // Si la cantidad es 0, resetear exportación
+    if (quantity <= 0) {
+        exportInput.value = 0;
+    }
+    
+    // Actualizar disponibles
+    const exportValue = parseInt(exportInput.value) || 0;
+    availableSpan.textContent = Math.max(0, quantity - exportValue);
+    
+    // Si el valor de exportación es mayor que la nueva cantidad, ajustarlo
+    if (exportValue > quantity) {
+        exportInput.value = quantity;
+        availableSpan.textContent = 0;
+    }
+}
+
+// Actualizar campos disponibles al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar todos los campos de cantidad
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        updateExportField(input);
+    });
+    
+    // Actualizar disponibles cuando cambia exportación
+    document.querySelectorAll('.export-input').forEach(input => {
+        input.addEventListener('input', function() {
+            const categoryId = this.dataset.category;
+            const quantityInput = document.querySelector(`.quantity-input[data-category="${categoryId}"]`);
+            const quantity = parseInt(quantityInput.value) || 0;
+            const exportValue = parseInt(this.value) || 0;
+            const availableSpan = document.querySelector(`#available-${categoryId}`);
+            
+            availableSpan.textContent = Math.max(0, quantity - exportValue);
+        });
+    });
+});
+</script>
+{% endblock %}

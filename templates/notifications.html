@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Tus Notificaciones</h2>
+            <a href="{{ url_for('notifications') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-sync"></i> Actualizar
+            </a>
+        </div>
+        
+        {% if notifications %}
+            <div class="list-group">
+                {% for notification in notifications %}
+                    <div class="list-group-item list-group-item-action flex-column align-items-start 
+                        {% if not notification.is_read %}list-group-item-primary{% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ notification.title }}</h5>
+                            <small>{{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                        </div>
+                        <p class="mb-1">{{ notification.message | replace('\n', '<br>') | safe }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Tipo: {{ notification.notification_type | capitalize }}
+                            </small>
+                            {% if not notification.is_read %}
+                                <form method="POST" action="{{ url_for('mark_notification_read', notification_id=notification.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check"></i> Marcar como leída
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="badge bg-secondary">Leída</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No tienes notificaciones.
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

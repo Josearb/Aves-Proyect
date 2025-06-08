@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Premios{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Mis Premios</h2>
+
+{% if current_user.awards %}
+<div class="list-group">
+    {% for award in current_user.awards %}
+    <div class="list-group-item">
+        <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">{{ award.contest_name }}</h5>
+            <small>{{ award.award_date.strftime('%Y') }}</small>
+        </div>
+        <p class="mb-1">{{ award.description }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">No tienes premios registrados aún.</div>
+{% endif %}
+{% endblock %}

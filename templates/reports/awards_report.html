@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte de Premios{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <h2 class="report-title">Premios Obtenidos por Usuarios</h2>
+    <div class="report-header">
+        <div class="report-meta">
+            <span>Generado el: {{ now.strftime('%d/%m/%Y %H:%M') }}</span>
+        </div>
+    </div>
+    
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Concurso</th>
+                <th>Fecha</th>
+                <th>Categoría</th>
+                <th>Posición</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in associates %}
+                {% for award in user.awards %}
+                <tr>
+                    <td>{{ user.full_name }}</td>
+                    <td>{{ award.contest_name }}</td>
+                    <td>{{ award.award_date.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ award.category }}</td>
+                    <td class="text-center">{{ award.position }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td>{{ user.full_name }}</td>
+                    <td colspan="4" class="text-muted">Sin premios registrados</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

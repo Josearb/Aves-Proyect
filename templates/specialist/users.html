@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios Asociados{% endblock %}
+
+{% block content %}
+<div class="users-container">
+    <div class="users-header">
+        <div class="header-actions">
+            <form class="search-form" onsubmit="return false;">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="userSearch" placeholder="Buscar por nombre, email o teléfono..." 
+                           onkeyup="filterUsers()">
+                </div>
+            </form>
+            {% if current_role in ['admin', 'specialist'] %}
+            <div class="report-actions">
+                <select id="reportType" class="form-select">
+                    <option value="">Seleccionar reporte...</option>
+                    <option value="contact">Información de Usuarios</option>    
+                    <option value="awards">Premios Obtenidos</option>
+                    <option value="full">Cantidad de Aves</option>
+                </select>
+                <button id="generateReport" class="btn btn-info">
+                    <i class="fas fa-file-pdf"></i> Generar Reporte
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if users %}
+    <div class="users-table-container">
+        <table class="users-table" id="usersTable">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Contacto</th>
+                    <th class="text-center">Aves</th>
+                    <th class="text-center">Comida Semanal</th>
+                    <th class="text-center">Última Actualización</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in users %}
+                <tr class="user-row">
+                    <td class="user-info clickable-row" data-search="{{ data.user.full_name|lower }}" 
+                        onclick="window.location='{{ url_for('manage_user', user_id=data.user.id) }}'">
+                        <div class="user-name">{{ data.user.full_name }}</div>
+                        <div class="user-role">
+                            {% if data.user.role == 'specialist' %}
+                            <span class="role-badge"><i class="fas fa-user-shield"></i> Especialista</span>
+                            {% elif data.user.role == 'dependiente' %}
+                            <span class="role-badge"><i class="fas fa-user-tie"></i> Dependiente</span>
+                            {% else %}
+                            <span class="role-badge"><i class="fas fa-user"></i> Usuario</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="contact-info" data-search="{{ data.user.email|lower }} {{ data.user.phone }}">
+                        <div><i class="fas fa-envelope"></i> {{ data.user.email }}</div>
+                        <div><i class="fas fa-phone"></i> {{ data.user.phone }}</div>
+                    </td>
+                    <td class="text-center birds-count" data-search="{{ data.total_birds }}">
+                        <span class="count-badge">{{ data.total_birds }}</span>
+                    </td>
+                    <td class="text-center food-amount" data-search="{{ "%.2f"|format(data.total_food) }}">
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {{ [data.total_food/10, 100]|min }}%"></div>
+                            <span>{{ "%.2f"|format(data.total_food) }}lb</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        {% if data.last_updated %}
+                        <span class="last-updated" title="{{ data.last_updated.strftime('%Y-%m-%d %H:%M') }}">
+                            {{ data.last_updated.strftime('%d/%m/%Y') }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted">Nunca</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="noResults" class="empty-state" style="display: none;">
+            <i class="fas fa-search-minus"></i>
+            <h3>No se encontraron resultados</h3>
+            <p>No hay usuarios que coincidan con tu búsqueda.</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-users-slash"></i>
+        <h3>No hay usuarios asociados disponibles</h3>
+        <p>Actualmente no hay usuarios registrados en el sistema.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% block scripts %}
+<script>
+function filterUsers() {
+    const input = document.getElementById('userSearch');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('.user-row');
+    const noResults = document.getElementById('noResults');
+    let hasResults = false;
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('[data-search]');
+        let rowMatch = false;
+        
+        cells.forEach(cell => {
+            if (cell.getAttribute('data-search').includes(filter)) {
+                rowMatch = true;
+            }
+        });
+        
+        if (rowMatch) {
+            row.style.display = '';
+            hasResults = true;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    if (hasResults || filter === '') {
+        noResults.style.display = 'none';
+    } else {
+        noResults.style.display = 'block';
+    }
+}
+
+// Generar reporte según selección
+document.getElementById('generateReport').addEventListener('click', function() {
+    const reportType = document.getElementById('reportType').value;
+    if (!reportType) {
+        alert('Por favor selecciona un tipo de reporte');
+        return;
+    }
+    
+    let url;
+    switch(reportType) {
+        case 'contact':
+            url = "{{ url_for('contact_report') }}";
+            break;
+        case 'birds':
+            url = "{{ url_for('birds_report') }}";
+            break;
+        case 'awards':
+            url = "{{ url_for('awards_report') }}";
+            break;
+        case 'full':
+            url = "{{ url_for('specialist_associates_report') }}";
+            break;
+    }
+    
+    window.open(url, '_blank');
+});
+
+// Hacer filas clickeables
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.style.cursor = 'pointer';
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}
