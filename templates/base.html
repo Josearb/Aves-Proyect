@@ -48,19 +48,22 @@
                         {% endif %}
                         
                         <li class="nav-item">
+                            <span class="nav-link">Hola, {{ current_user.full_name }}</span>
+                        </li>
+
+                        <li class="nav-item position-relative me-2">
                             <a class="nav-link" href="{{ url_for('notifications') }}">
-                                <i class="fas fa-bell"></i> 
+                                <i class="fas fa-bell fa-lg"></i>
                                 {% if current_user.is_authenticated %}
                                     {% set unread_count = get_unread_notifications_count(current_user.id) %}
                                     {% if unread_count > 0 %}
-                                        <span class="notification-badge">{{ unread_count }}</span>
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            {{ unread_count }}
+                                            <span class="visually-hidden">Notificaciones no leídas</span>
+                                        </span>
                                     {% endif %}
                                 {% endif %}
                             </a>
-                        </li>
-                        
-                        <li class="nav-item">
-                            <span class="nav-link">Hola, {{ current_user.full_name }}</span>
                         </li>
                         
                         <li class="nav-item">
