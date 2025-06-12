@@ -1,0 +1,56 @@
+{% extends "base_print.html" %}
+
+{% block title %}Reporte de Comida{% endblock %}
+
+{% block content %}
+<div class="print-container">
+    <div class="print-header">
+        <h1>Reporte de Comida</h1>
+    </div>
+
+    <div class="report-content">
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th class="text-center">Cantidad Total (lb/sem)</th>
+                    <th class="text-center">Costo Semanal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set grand_total = namespace(quantity=0, cost=0) %}
+                {% for user in associates %}
+                    {% if user.birds %}
+                        {% set user_total = namespace(quantity=0, cost=0) %}
+                        {% for bird in user.birds %}
+                            {% if bird.food_required and bird.food_required > 0 %}
+                                {% set food_type = food_types|selectattr('name', 'equalto', bird.food_type)|first %}
+                                {% if food_type %}
+                                    {% set cost = bird.food_required * food_type.price_per_pound %}
+                                    {% set user_total.quantity = user_total.quantity + bird.food_required %}
+                                    {% set user_total.cost = user_total.cost + cost %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if user_total.quantity > 0 %}
+                        <tr>
+                            <td>{{ user.full_name }}</td>
+                            <td class="text-center">{{ "%.2f"|format(user_total.quantity) }}</td>
+                            <td class="text-center">${{ "%.2f"|format(user_total.cost) }}</td>
+                        </tr>
+                        {% set grand_total.quantity = grand_total.quantity + user_total.quantity %}
+                        {% set grand_total.cost = grand_total.cost + user_total.cost %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                <tr class="total-row">
+                    <td><strong>TOTAL GENERAL</strong></td>
+                    <td class="text-center"><strong>{{ "%.2f"|format(grand_total.quantity) }}</strong></td>
+                    <td class="text-center"><strong>${{ "%.2f"|format(grand_total.cost) }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

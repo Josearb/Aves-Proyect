@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Usuarios Asociados{% endblock %}
+{% block title %}{% if current_role == 'dependiente' %}Requerimientos de Comida{% else %}Usuarios Asociados{% endif %}{% endblock %}
 
 {% block content %}
 <div class="users-container">
@@ -13,19 +13,21 @@
                            onkeyup="filterUsers()">
                 </div>
             </form>
-            {% if current_role in ['admin', 'specialist'] %}
             <div class="report-actions">
                 <select id="reportType" class="form-select">
                     <option value="">Seleccionar reporte...</option>
-                    <option value="contact">Información de Usuarios</option>    
-                    <option value="awards">Premios Obtenidos</option>
-                    <option value="full">Cantidad de Aves</option>
+                    {% if current_role == 'specialist' %}
+                        <option value="contact">Información de Usuarios</option>    
+                        <option value="awards">Premios Obtenidos</option>
+                        <option value="full">Cantidad de Aves</option>
+                    {% else %}
+                        <option value="food">Requerimientos de Comida</option>
+                    {% endif %}
                 </select>
                 <button id="generateReport" class="btn btn-info">
                     <i class="fas fa-file-pdf"></i> Generar Reporte
                 </button>
             </div>
-            {% endif %}
         </div>
     </div>
     
@@ -39,6 +41,9 @@
                     <th class="text-center">Aves</th>
                     <th class="text-center">Comida Semanal</th>
                     <th class="text-center">Última Actualización</th>
+                    {% if current_role == 'dependiente' %}
+                    <th class="text-center">Costo Semanal</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -79,6 +84,24 @@
                         <span class="text-muted">Nunca</span>
                         {% endif %}
                     </td>
+                    {% if current_role == 'dependiente' %}
+                    <td class="text-center">
+                        {% if data.user.birds %}
+                            {% set total_cost = namespace(value=0) %}
+                            {% for bird in data.user.birds %}
+                                {% if bird.food_type %}
+                                    {% set food_type = food_types|selectattr('name', 'equalto', bird.food_type)|first %}
+                                    {% if food_type %}
+                                        {% set total_cost.value = total_cost.value + (bird.food_required * food_type.price_per_pound) %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            ${{ "%.2f"|format(total_cost.value) }}
+                        {% else %}
+                            $0.00
+                        {% endif %}
+                    </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
@@ -145,14 +168,14 @@ document.getElementById('generateReport').addEventListener('click', function() {
         case 'contact':
             url = "{{ url_for('contact_report') }}";
             break;
-        case 'birds':
-            url = "{{ url_for('birds_report') }}";
-            break;
         case 'awards':
             url = "{{ url_for('awards_report') }}";
             break;
         case 'full':
             url = "{{ url_for('specialist_associates_report') }}";
+            break;
+        case 'food':
+            url = "{{ url_for('food_report') }}";
             break;
     }
     

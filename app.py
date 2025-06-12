@@ -489,7 +489,7 @@ def manage_user(user_id):
                 create_notification(
                     user_id=user.id,
                     title="Nuevo premio registrado",
-                    message=f"Se ha registrado un nuevo premio para ti en {contest_name}: {position} lugar",
+                    message=f"Se ha registrado un nuevo premio para ti en el concurso {contest_name}: {position} lugar",
                     notification_type='award'
                 )
                 
@@ -1003,6 +1003,29 @@ def create_notification(user_id, title, message, notification_type='system', is_
     
     db.session.commit()
     return notification
+
+# ----------- Dependiente Routes -----------
+@app.route('/reports/food')
+@login_required
+def food_report():
+    if current_user.role != 'dependiente':
+        abort(403)
+    
+    # Obtener usuarios asociados con sus datos de comida
+    associates = db.session.execute(
+        select(User)
+        .where(User.is_associated == True)
+        .order_by(User.full_name)
+        .options(db.subqueryload(User.birds).joinedload(UserBirds.category))
+    ).scalars().all()
+    
+    # Obtener todos los tipos de comida para calcular costos
+    food_types = db.session.execute(select(BirdFoodType)).scalars().all()
+    
+    return render_template('reports/food_report.html',
+                         associates=associates,
+                         food_types=food_types,
+                         now=datetime.utcnow())
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

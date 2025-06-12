@@ -2564,3 +2564,32 @@
         margin-right: 5px;
     }
 
+    /* Estilos para el reporte de comida */
+.report-table th {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.grand-total {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.grand-total td {
+    border-top: 2px solid #4CAF50;
+    border-bottom: 2px solid #4CAF50;
+}
+
+.total-row td {
+    border-top: 1px solid #ddd;
+    font-weight: bold;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
