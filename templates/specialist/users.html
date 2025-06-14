@@ -86,20 +86,18 @@
                     </td>
                     {% if current_role == 'dependiente' %}
                     <td class="text-center">
+                        {% set total_cost = namespace(value=0) %}
                         {% if data.user.birds %}
-                            {% set total_cost = namespace(value=0) %}
                             {% for bird in data.user.birds %}
-                                {% if bird.food_type %}
+                                {% if bird.food_type and bird.food_per_bird is not none and bird.quantity %}
                                     {% set food_type = food_types|selectattr('name', 'equalto', bird.food_type)|first %}
                                     {% if food_type %}
-                                        {% set total_cost.value = total_cost.value + (bird.food_required * food_type.price_per_pound) %}
+                                        {% set total_cost.value = total_cost.value + (bird.food_per_bird * bird.quantity * food_type.price_per_pound) %}
                                     {% endif %}
                                 {% endif %}
                             {% endfor %}
-                            ${{ "%.2f"|format(total_cost.value) }}
-                        {% else %}
-                            $0.00
                         {% endif %}
+                        ${{ "%.2f"|format(total_cost.value) }}
                     </td>
                     {% endif %}
                 </tr>

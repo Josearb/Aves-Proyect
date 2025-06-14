@@ -368,6 +368,7 @@ def specialist_users():
     
     return render_template('specialist/users.html', 
                          users=users_data,
+                         food_types=BirdFoodType.query.all(),
                          current_role=current_user.role)
 
     
