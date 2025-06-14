@@ -114,6 +114,13 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        phone = request.form['phone'].strip()
+        
+        # Validación manual del teléfono
+        if not phone.isdigit() or len(phone) < 8:
+            flash('El teléfono debe contener solo números y tener al menos 8 dígitos', 'danger')
+            return redirect(url_for('register'))
+
         if db.session.execute(select(User).filter(or_(
             User.username == request.form['username'],
             User.email == request.form['email']
@@ -121,30 +128,36 @@ def register():
             flash('Usuario o email ya registrado', 'danger')
             return redirect(url_for('register'))
 
-        user = User(
-            username=request.form['username'],
-            email=request.form['email'],
-            full_name=request.form['full_name'],
-            phone=request.form['phone'],
-            role='user',
-            is_associated=False
-        )
-        user.set_password(request.form['password'])
-        db.session.add(user)
-        db.session.commit()
-        
-        # Notificar SOLO al administrador (no a especialistas)
-        admin = db.session.execute(select(User).filter_by(role='admin')).scalar()
-        if admin:
-            create_notification(
-                user_id=admin.id,
-                title="Nuevo registro de usuario",
-                message=f"El usuario {user.username} ({user.full_name}) se ha registrado en el sistema.",
-                notification_type='system'
+        try:
+            user = User(
+                username=request.form['username'],
+                email=request.form['email'],
+                full_name=request.form['full_name'],
+                phone=phone,
+                role='user',
+                is_associated=False
             )
-        
-        flash('Registro exitoso. Inicia sesión', 'success')
-        return redirect(url_for('login'))
+            user.set_password(request.form['password'])
+            db.session.add(user)
+            db.session.commit()
+            
+            # Notificar SOLO al administrador (no a especialistas)
+            admin = db.session.execute(select(User).filter_by(role='admin')).scalar()
+            if admin:
+                create_notification(
+                    user_id=admin.id,
+                    title="Nuevo registro de usuario",
+                    message=f"El nuevo usuario {user.username} ({user.full_name}) se ha registrado en el sistema.",
+                    notification_type='system'
+                )
+            
+            flash('Registro exitoso. Inicia sesión', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al registrar: {str(e)}', 'danger')
+            return redirect(url_for('register'))
+            
     return render_template('register.html')
 
 @app.route('/logout')
