@@ -37,16 +37,16 @@
                     </div>
                     <div class="stat-item">
                         <span class="stat-value">
-                            {% if user.birds and user.birds[0].food_type %}
-                                {% set food_type = food_types|selectattr('name', 'equalto', user.birds[0].food_type)|first %}
-                                {% if food_type %}
-                                    ${{ "%.2f"|format(user.birds|sum(attribute='food_required') * food_type.price_per_pound) }}
-                                {% else %}
-                                    $0.00
+                            {% set total_cost = namespace(value=0) %}
+                            {% for bird in user.birds %}
+                                {% if bird.food_type and bird.food_required %}
+                                    {% set food_type = food_types|selectattr('name', 'equalto', bird.food_type)|first %}
+                                    {% if food_type %}
+                                        {% set total_cost.value = total_cost.value + (bird.food_required * food_type.price_per_pound) %}
+                                    {% endif %}
                                 {% endif %}
-                            {% else %}
-                                $0.00
-                            {% endif %}
+                            {% endfor %}
+                            ${{ "%.2f"|format(total_cost.value) }}
                         </span>
                         <span class="stat-label">Costo Semanal</span>
                     </div>
@@ -132,7 +132,7 @@
                                 </td>
                                 {% if current_user.role == 'dependiente' %}
                                 <td class="text-center cost-cell">
-                                    {% if bird.food_type %}
+                                    {% if bird.food_type and bird.food_required %}
                                         {% set food_type = food_types|selectattr('name', 'equalto', bird.food_type)|first %}
                                         {% if food_type %}
                                             {% set cost = bird.food_required * food_type.price_per_pound %}
