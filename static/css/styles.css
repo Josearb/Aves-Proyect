@@ -2396,6 +2396,26 @@
 
 .notification-item.food {
     border-left-color: #FF9800;
+    background-color: rgba(255, 152, 0, 0.05);
+}
+
+.notification-item.food .notification-title {
+    color: #FF9800;
+    font-weight: bold;
+}
+
+.food-collected-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.food-collected-btn:hover {
+    background-color: #388E3C;
 }
 
 .notification-item.birds {
@@ -2593,3 +2613,16 @@
     text-align: right;
 }
 
+/* Estilo para el botón de notificación de comida */
+#foodDeliveryBtn {
+    transition: all 0.3s ease;
+}
+
+#foodDeliveryBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#foodDeliveryBtn i {
+    margin-right: 8px;
+}

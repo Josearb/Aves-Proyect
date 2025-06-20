@@ -74,14 +74,13 @@
                             <div class="progress-bar" style="width: {{ [data.total_food/10, 100]|min }}%"></div>
                             <span>{{ "%.2f"|format(data.total_food) }}lb</span>
                         </div>
-                    </td>
-                    <td class="text-center">
-                        {% if data.last_updated %}
-                        <span class="last-updated" title="{{ data.last_updated.strftime('%Y-%m-%d %H:%M') }}">
-                            {{ data.last_updated.strftime('%d/%m/%Y') }}
-                        </span>
-                        {% else %}
-                        <span class="text-muted">Nunca</span>
+                        {% if data.total_food > 0 and current_user.role == 'dependiente' %}
+                        <form method="POST" action="{{ url_for('mark_food_collected', user_id=data.user.id) }}" 
+                            class="mt-2" onsubmit="return confirm('¿Confirmas recogida de comida?');">
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="fas fa-check"></i> Recogida
+                            </button>
+                        </form>
                         {% endif %}
                     </td>
                     {% if current_role == 'dependiente' %}

@@ -67,11 +67,17 @@ class Award(db.Model):
     description = db.Column(db.Text)
     category = db.Column(db.String(100))  # Categoría en la que se ganó el premio
     position = db.Column(db.String)  # Posición obtenida (1ro, 2do, etc.)
+    quantity = db.Column(db.Integer, default=1)  # Nueva columna para cantidad de veces obtenido
 
     @validates('award_date')
     def validate_award_date(self, key, award_date):
         assert award_date is not None, "Fecha de premio no puede ser vacía"
         return award_date
+    
+    @validates('quantity')
+    def validate_quantity(self, key, quantity):
+        assert quantity >= 1, "La cantidad debe ser al menos 1"
+        return quantity
 
 class UserBirds(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -84,6 +90,7 @@ class UserBirds(db.Model):
     notes = db.Column(db.Text)  # Notas adicionales sobre las aves
     export_quantity = db.Column(db.Integer, default=0)  # Cantidad para exportación
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
     
     @validates('export_quantity')
     def validate_export_quantity(self, key, export_quantity):

@@ -141,7 +141,8 @@ def register():
             db.session.add(user)
             db.session.commit()
             
-            # Notificar SOLO al administrador (no a especialistas)
+            # Notificar SOLO al administrador (no a e
+            # ialistas)
             admin = db.session.execute(select(User).filter_by(role='admin')).scalar()
             if admin:
                 create_notification(
@@ -450,9 +451,11 @@ def manage_user(user_id):
         if contest_name and contest_name != '__other__':
             award_date = request.form.get('award_date')
             position = request.form.get('position')
+            quantity = request.form.get('award_quantity', 1)  # Nuevo campo
             
             try:
                 award_date_obj = datetime.strptime(award_date, '%Y-%m-%d') if award_date else datetime.utcnow()
+                quantity = int(quantity) if quantity else 1
                 
                 if not position:
                     flash('Debe seleccionar un puesto para el premio', 'danger')
@@ -462,7 +465,8 @@ def manage_user(user_id):
                         contest_name=contest_name,
                         award_date=award_date_obj,
                         position=position,
-                        category=request.form.get('award_category', '')
+                        category=request.form.get('award_category', ''),
+                        quantity=quantity  # Nuevo campo
                     )
                     db.session.add(award)
                     award_added = True
@@ -990,31 +994,16 @@ def notification_count():
     return jsonify({'count': count})
 
 def create_notification(user_id, title, message, notification_type='system', is_read=False):
-    """Crea una nueva notificación"""
-    # Crear notificación para el usuario destino
+    """Crea una nueva notificación con marca de tiempo"""
     notification = Notification(
         user_id=user_id,
         title=title,
-        message=message,
+        message=f"{message}\n\nFecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}",
         notification_type=notification_type,
         is_read=is_read,
         created_at=datetime.utcnow()
     )
     db.session.add(notification)
-    
-    # Obtener al administrador y enviarle una copia (excepto si el destino ES el admin)
-    admin = db.session.execute(select(User).filter_by(role='admin').limit(1)).scalar()
-    if admin and admin.id != user_id:
-        admin_notification = Notification(
-            user_id=admin.id,
-            title=f"[ADMIN COPY] {title}",
-            message=f"Notificación enviada a {db.session.get(User, user_id).full_name}:\n\n{message}",
-            notification_type=notification_type,
-            is_read=False,
-            created_at=datetime.utcnow()
-        )
-        db.session.add(admin_notification)
-    
     db.session.commit()
     return notification
 
@@ -1040,6 +1029,54 @@ def food_report():
                          associates=associates,
                          food_types=food_types,
                          now=datetime.utcnow())
+
+@app.route('/mark_food_collected/<int:user_id>', methods=['POST'])
+@login_required
+def mark_food_collected(user_id):
+    if current_user.role != 'dependiente':
+        abort(403)
+    
+    user = db.session.get(User, user_id)
+    if not user or not user.is_associated:
+        flash('Usuario no asociado o no encontrado', 'danger')
+        return redirect(url_for('specialist_users'))
+    
+    try:
+        # Notificar al usuario
+        create_notification(
+            user_id=user.id,
+            title="Comida recogida",
+            message=f"El dependiente {current_user.full_name} ha registrado la recogida de tu comida.",
+            notification_type='food'
+        )
+        
+        # Notificar al admin
+        admin = db.session.execute(select(User).filter_by(role='admin')).scalar()
+        if admin:
+            create_notification(
+                user_id=admin.id,
+                title="Recogida de comida registrada",
+                message=f"El dependiente {current_user.full_name} ha registrado la recogida de comida para {user.full_name}.",
+                notification_type='food'
+            )
+        
+        # Notificar al especialista
+        specialist = db.session.execute(select(User).filter_by(role='specialist')).scalar()
+        if specialist:
+            create_notification(
+                user_id=specialist.id,  # Usar specialist.id en lugar de admin.id
+                title="Recogida de comida registrada",
+                message=f"El dependiente {current_user.full_name} ha registrado la recogida de comida para {user.full_name}.",
+                notification_type='food'
+            )
+        
+        db.session.commit()
+        flash('Recogida de comida registrada correctamente', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al registrar la recogida: {str(e)}', 'danger')
+    
+    return redirect(url_for('manage_user', user_id=user_id))
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

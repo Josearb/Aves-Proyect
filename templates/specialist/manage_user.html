@@ -211,6 +211,12 @@
                                 <option value="mención especial">Mención especial</option>
                             </select>
                         </div>
+                        
+                        <div class="form-group">
+                            <input type="number" class="form-control" name="award_quantity" 
+                                value="1" min="1" placeholder="Cantidad">
+                        </div>
+
                         <button type="submit" class="btn-save-award">
                             <i class="fas fa-plus-circle"></i> Agregar Premio
                         </button>
@@ -240,7 +246,7 @@
                         <div class="award-meta">
                             <span class="award-category">{{ award.category }}</span>
                             <span class="award-date">{{ award.award_date.strftime('%d/%m/%Y') }}</span>
-                            <span class="award-position">{{ award.position }}</span>
+                            <span class="award-position">{{ award.position }} (x{{ award.quantity }})</span>
                         </div>
                     </div>
                     {% if current_user.role in ['admin', 'specialist'] %}

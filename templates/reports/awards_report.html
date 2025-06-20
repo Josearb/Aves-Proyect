@@ -29,7 +29,7 @@
                     <td>{{ award.contest_name }}</td>
                     <td>{{ award.award_date.strftime('%d/%m/%Y') }}</td>
                     <td>{{ award.category }}</td>
-                    <td class="text-center">{{ award.position }}</td>
+                    <td class="text-center">{{ award.position }} (x{{ award.quantity }})</td>
                 </tr>
                 {% else %}
                 <tr>
